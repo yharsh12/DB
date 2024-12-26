@@ -1,0 +1,76 @@
+CREATE DATABASE LittleLemonDB;
+USE LittleLemonDB;
+CREATE TABLE Customers (
+    CustomerID INT AUTO_INCREMENT PRIMARY KEY,
+    FirstName VARCHAR(50) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    Email VARCHAR(100) UNIQUE NOT NULL,
+    Phone VARCHAR(15)
+);
+CREATE TABLE Rooms (
+    RoomID INT AUTO_INCREMENT PRIMARY KEY,
+    RoomType VARCHAR(50) NOT NULL,
+    Capacity INT NOT NULL,
+    Price DECIMAL(10, 2) NOT NULL,
+    MaxQuantity INT NOT NULL
+);
+CREATE TABLE Bookings (
+    BookingID INT AUTO_INCREMENT PRIMARY KEY,
+    CustomerID INT,
+    RoomID INT,
+    BookingDate DATE NOT NULL,
+    CheckInDate DATE NOT NULL,
+    CheckOutDate DATE NOT NULL,
+    Quantity INT NOT NULL,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
+    FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID)
+);
+DELIMITER //
+CREATE PROCEDURE GetMaxQuantity(IN roomType VARCHAR(50), OUT maxQuantity INT)
+BEGIN
+    SELECT MaxQuantity INTO maxQuantity
+    FROM Rooms
+    WHERE RoomType = roomType;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE PROCEDURE ManageBooking(IN bookingID INT, IN action VARCHAR(10))
+BEGIN
+    IF action = 'update' THEN
+        UPDATE Bookings SET BookingDate = NOW() WHERE BookingID = bookingID;
+    ELSEIF action = 'cancel' THEN
+        DELETE FROM Bookings WHERE BookingID = bookingID;
+    END IF;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE PROCEDURE UpdateBooking(IN bookingID INT, IN newCheckIn DATE, IN newCheckOut DATE, IN newQuantity INT)
+BEGIN
+    UPDATE Bookings
+    SET CheckInDate = newCheckIn, CheckOutDate = newCheckOut, Quantity = newQuantity
+    WHERE BookingID = bookingID;
+END //
+DELIMITER ;
+DELIMITER //
+CREATE PROCEDURE AddBooking(IN customerID INT, IN roomID INT, IN bookingDate DATE, IN checkIn DATE, IN checkOut DATE, IN quantity INT)
+BEGIN
+    INSERT INTO Bookings (CustomerID, RoomID, BookingDate, CheckInDate, CheckOutDate, Quantity)
+    VALUES (customerID, roomID, bookingDate, checkIn, checkOut, quantity);
+END //
+DELIMITER ;
+DELIMITER //
+CREATE PROCEDURE CancelBooking(IN bookingID INT)
+BEGIN
+    DELETE FROM Bookings WHERE BookingID = bookingID;
+END //
+DELIMITER ;
+INSERT INTO Customers (FirstName, LastName, Email, Phone) VALUES
+('John', 'Doe', 'john.doe@example.com', '1234567890'),
+('Jane', 'Smith', 'jane.smith@example.com', '0987654321');
+INSERT INTO Rooms (RoomType, Capacity, Price, MaxQuantity) VALUES
+('Single', 1, 100.00, 5),
+('Double', 2, 150.00, 3),
+('Suite', 4, 250.00, 2);
+INSERT INTO Bookings (CustomerID, RoomID, BookingDate, CheckInDate, CheckOutDate, Quantity) VALUES
+(1, 1, NOW(), '2023-10-01', '2023-10-05', 1),
+(2, 2, NOW(), '2023-10-10', '2023-10-15', 2);
